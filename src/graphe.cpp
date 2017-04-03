@@ -142,6 +142,8 @@ bool Graphe::isCyclic() const
 //! \throws logic_error lorsque p_origine ou p_destination n'existe pas
 unsigned int Graphe::plusCourtChemin(size_t p_origine, size_t p_destination, std::vector<size_t> &p_chemin) const
 {
+
+    //return defaultDijkstra(p_origine, p_destination, p_chemin);
     if (p_origine >= m_listesAdj.size() || p_destination >= m_listesAdj.size())
         throw logic_error("Graphe::dijkstra(): p_origine ou p_destination n'existe pas");
 
@@ -160,15 +162,16 @@ unsigned int Graphe::plusCourtChemin(size_t p_origine, size_t p_destination, std
     std::priority_queue<weight_pair, std::vector<weight_pair>, std::greater<weight_pair> > node_queue;
     node_queue.push(std::make_pair(distance[p_origine], p_origine));
 
-
     while (!node_queue.empty())
     {
+        
         unsigned int dist = node_queue.top().first;
         size_t u = node_queue.top().second;
         node_queue.pop();
 
         if (u == p_destination) break;
 
+        //noeud obsolète, à ignorer
         if (dist > distance[u]) continue;
 
         for (auto it = m_listesAdj[u].begin() ; it != m_listesAdj[u].end() ; ++it)
@@ -176,9 +179,75 @@ unsigned int Graphe::plusCourtChemin(size_t p_origine, size_t p_destination, std
             unsigned int temp = dist + it->poids;
             if (temp < distance[it->destination])
             {
+
                 distance[it->destination] = temp;
                 predecesseur[it->destination] = u;
                 node_queue.push(std::make_pair(distance[it->destination], it->destination));
+            }
+        }
+    }
+
+    if (predecesseur[p_destination] == numeric_limits<unsigned int>::max())
+    {
+        p_chemin.push_back(p_destination);
+        return numeric_limits<unsigned int>::max();
+    }
+
+    size_t dest = p_destination;
+    p_chemin.insert(p_chemin.begin(), dest);
+
+    while(dest != numeric_limits<size_t>::max()) {
+        dest = predecesseur[dest];
+        p_chemin.insert(p_chemin.begin(), dest);
+    }
+
+    p_chemin.erase(p_chemin.begin());
+    return distance[p_destination];
+}
+
+
+unsigned int Graphe::dijkstraWithSet(size_t p_origine, size_t p_destination, std::vector<size_t> &p_chemin) const
+{
+
+    //return defaultDijkstra(p_origine, p_destination, p_chemin);
+    if (p_origine >= m_listesAdj.size() || p_destination >= m_listesAdj.size())
+        throw logic_error("Graphe::dijkstra(): p_origine ou p_destination n'existe pas");
+
+    p_chemin.clear();
+
+    if (p_origine == p_destination)
+    {
+        p_chemin.push_back(p_destination);
+        return 0;
+    }
+
+    vector<unsigned int> distance(m_listesAdj.size(), numeric_limits<unsigned int>::max());
+    vector<size_t> predecesseur(m_listesAdj.size(), numeric_limits<size_t>::max());
+    distance[p_origine] = 0;
+
+    std::set<weight_pair > node_queue;
+    node_queue.insert(std::make_pair(distance[p_origine], p_origine));
+
+    while (!node_queue.empty())
+    {
+
+        unsigned int dist = node_queue.begin()->first;
+        size_t u = node_queue.begin()->second;
+        node_queue.erase(node_queue.begin());
+
+        if (u == p_destination) break;
+
+        for (auto it = m_listesAdj[u].begin() ; it != m_listesAdj[u].end() ; ++it)
+        {
+            unsigned int temp = dist + it->poids;
+            if (temp < distance[it->destination])
+            {
+
+                node_queue.erase(std::make_pair(distance[it->destination], it->destination));
+                distance[it->destination] = temp;
+                predecesseur[it->destination] = u;
+                node_queue.insert(std::make_pair(distance[it->destination], it->destination));
+
             }
         }
     }
@@ -201,7 +270,6 @@ unsigned int Graphe::plusCourtChemin(size_t p_origine, size_t p_destination, std
     p_chemin.erase(p_chemin.begin());
     return distance[p_destination];
 }
-
 
 //! \brief Algorithme de Dijkstra permettant de trouver le plus court chemin entre p_origine et p_destination
 //! \pre p_origine et p_destination doivent être des sommets du graphe

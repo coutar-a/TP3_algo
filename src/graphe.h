@@ -15,6 +15,7 @@
 #include <iostream>
 #include <algorithm>
 #include <queue>
+#include <set>
 #include <utility>
 
 typedef std::pair<unsigned int, size_t> weight_pair;
@@ -35,6 +36,8 @@ public:
     unsigned int plusCourtChemin(size_t p_origine, size_t p_destination,
                              std::vector<size_t> & p_chemin) const;
     bool isCyclic() const;
+    unsigned int dijkstraWithSet(size_t p_origine, size_t p_destination,
+                             std::vector<size_t> & p_chemin) const;
     unsigned int defaultDijkstra(size_t p_origine, size_t p_destination,
                              std::vector<size_t> & p_chemin) const;
 
